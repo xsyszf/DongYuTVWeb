@@ -270,7 +270,7 @@ abstract class VideoFragment: Fragment() {
    */
   open fun onPageFinished(url: String) {
     isPageLoadFinished = true
-    webView.execJs(JsType.VIDEO)
+    // webView.execJs(JsType.VIDEO)
     binding.loading.isVisible = false
   }
 
@@ -384,7 +384,7 @@ abstract class VideoFragment: Fragment() {
     } else {
       Log.i(TAG, "onResume: play: ${binding.webview.url}")
       // 视频已经准备好了
-      webView.execJs(JsType.PLAY)
+      // webView.execJs(JsType.PLAY)
     }
     handler.removeCallbacks(pauseRunnable)
   }
@@ -413,7 +413,7 @@ abstract class VideoFragment: Fragment() {
       Log.i(TAG, "onPause: loadUrl about:blank, url: ${binding.webview.url}")
     } else {
       // 视频已经准备好了，则进行暂停
-      webView.execJs(JsType.PAUSE)
+      // webView.execJs(JsType.PAUSE)
       // webView.loadUrl("about:blank")
       Log.i(TAG, "onPause: pause: ${binding.webview.url}")
     }

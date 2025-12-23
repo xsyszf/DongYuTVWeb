@@ -24,10 +24,15 @@ object JsManager {
 
   fun getJs(type: JsType) = jsMap[type.typeName]
 
-  fun WebView.execJs(type: JsType) {
+  fun WebView.execJs(type: JsType, vararg args: Pair<String, Any?>) {
     getJs(type)?.let {
-      Log.i("JsManager", "execJs: $it")
-      evaluateJavascript(it) { i ->
+
+      var result = it
+      for ((key, value) in args) {
+        result = result.replace("{{${key}}}", value.toString())
+      }
+
+      evaluateJavascript(result) { i ->
         Log.i("JsManager", i)
       }
     }

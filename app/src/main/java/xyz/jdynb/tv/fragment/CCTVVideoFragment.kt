@@ -44,8 +44,8 @@ class CCTVVideoFragment: VideoFragment() {
 
   override fun onPageFinished(url: String) {
     super.onPageFinished(url)
-    webView.execJs(JsType.CLEAR_CCTV)
-    webView.execJs(JsType.FULLSCREEN_CCTV)
+    // webView.execJs(JsType.CLEAR_CCTV)
+    // webView.execJs(JsType.FULLSCREEN_CCTV)
   }
 
 }

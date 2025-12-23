@@ -2,6 +2,7 @@ package xyz.jdynb.tv
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.appsearch.observer.ObserverCallback
 import android.media.AudioManager
 import android.os.Bundle
 import android.os.Handler
@@ -15,6 +16,7 @@ import androidx.core.content.edit
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.databinding.DataBindingUtil
+import androidx.databinding.Observable
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
@@ -29,11 +31,14 @@ import kotlinx.serialization.json.jsonPrimitive
 import xyz.jdynb.tv.databinding.ActivityMainBinding
 import xyz.jdynb.tv.enums.LiveSource
 import xyz.jdynb.tv.fragment.CCTVVideoFragment
+import xyz.jdynb.tv.fragment.LivePlayerFragment
 import xyz.jdynb.tv.fragment.VideoFragment
 import xyz.jdynb.tv.fragment.YspVideoFragment
 import xyz.jdynb.tv.model.LiveItem
 import xyz.jdynb.tv.model.MainModel
+import xyz.jdynb.tv.model.YspLiveChannelModel
 import xyz.jdynb.tv.utils.JsManager
+import xyz.jdynb.tv.utils.setSerializableArguments
 import java.nio.charset.StandardCharsets
 
 class MainActivity : AppCompatActivity() {
@@ -44,15 +49,17 @@ class MainActivity : AppCompatActivity() {
 
   }
 
-  private val fragments = mutableListOf<VideoFragment>()
-
   private lateinit var binding: ActivityMainBinding
+
+  private lateinit var livePlayerFragment: LivePlayerFragment
+
+  private var beforeIndex = 0
 
   private val mainModel = MainModel()
 
   private val numberStringBuilder = StringBuilder()
 
-  private val liveItems = mutableListOf<LiveItem>()
+  private val liveItems = mutableListOf<YspLiveChannelModel>()
 
   private val handler = Handler(Looper.getMainLooper())
 
@@ -62,23 +69,18 @@ class MainActivity : AppCompatActivity() {
 
   private val numberRunnable = Runnable {
     mainModel.showStatus = false
-    val number = numberStringBuilder.toString().toIntOrNull() ?: return@Runnable
     numberStringBuilder.clear()
 
-    if (number <= 0 || number > (liveItems.lastOrNull()?.num ?: 0)) {
-      Log.w(TAG, "Invalid number: $number")
+    if (mainModel.currentIndex < 0 || mainModel.currentIndex >= liveItems.size) {
+      // 回滚
+      mainModel.currentIndex = beforeIndex
       return@Runnable
     }
 
-    Log.i(TAG, "seekTo number: $number")
-    val index = liveItems.indexOfFirst { it.num == number }
-    if (index != -1) {
-      binding.vp.setCurrentItem(index, false)
-    }
+    mainModel.notifyPropertyChanged(BR.currentIndex)
 
+    Log.i(TAG, "seekTo number: ${mainModel.currentIndex}")
   }
-
-  private val currentFragment get() = fragments[binding.vp.currentItem]
 
   private lateinit var audioManager: AudioManager
 
@@ -89,23 +91,10 @@ class MainActivity : AppCompatActivity() {
     insetsController.hide(WindowInsetsCompat.Type.systemBars())
 
     audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+    val config = getSharedPreferences("config", MODE_PRIVATE)
 
     binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
     binding.m = mainModel
-    val vp = binding.vp
-
-    val config = getSharedPreferences("config", MODE_PRIVATE)
-
-    vp.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-      override fun onPageSelected(position: Int) {
-        liveItems.getOrNull(position)?.let {
-          showStatus(it)
-          config.edit {
-            putInt("num", it.num)
-          }
-        }
-      }
-    })
 
     ActivityCompat.requestPermissions(
       this, arrayOf(
@@ -117,42 +106,50 @@ class MainActivity : AppCompatActivity() {
     lifecycleScope.launch {
       withContext(Dispatchers.IO) {
         JsManager.init(this@MainActivity)
-        assets.open("lives.json").use {
+        assets.open("lives_ysp.json").use {
           val liveJsonContent = it.readBytes().toString(StandardCharsets.UTF_8)
           val json = Json {
             encodeDefaults = true
             ignoreUnknownKeys = true
           }
-
-          val liveItems = json.decodeFromString<List<LiveItem>>(liveJsonContent)
-
-          this@MainActivity.liveItems.addAll(liveItems)
-
-          fragments.addAll(liveItems.map { item ->
-            when (item.sourceEnum) {
-              LiveSource.CCTV -> VideoFragment.newInstance<CCTVVideoFragment>(item)
-              LiveSource.YSP -> VideoFragment.newInstance<YspVideoFragment>(item)
-              else -> throw IllegalStateException()
-            }
-          })
+          liveItems.addAll(json.decodeFromString<List<YspLiveChannelModel>>(liveJsonContent))
+          mainModel.liveItems = liveItems
         }
       }
 
-      initViewPager(vp)
+      mainModel.currentIndex = config.getInt("currentIndex", 0)
+      livePlayerFragment = LivePlayerFragment.newInstance(mainModel.currentLiveItem)
 
-      /*val currentNum = config.getInt("num", 0)
-      vp.setCurrentItem(when {
-        currentNum == 0 -> 0
-        else -> liveItems.indexOfFirst { it.num == currentNum }
-      }, false)*/
+      supportFragmentManager.beginTransaction()
+        .replace(R.id.fragment, livePlayerFragment)
+        .commitNow()
     }
-  }
 
-  private fun showStatus(liveItem: LiveItem) {
-    mainModel.showStatus = true
-    mainModel.currentLiveItem = liveItem.copy()
-    handler.removeCallbacks(timeRunnable)
-    handler.postDelayed(timeRunnable, 5000)
+    mainModel.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
+      override fun onPropertyChanged(sender: Observable, propertyId: Int) {
+        if (propertyId == BR.currentIndex) {
+
+          if (numberStringBuilder.isNotEmpty()) {
+            // 表示正在输入中...
+            return
+          }
+
+          val currentIndex = mainModel.currentIndex
+
+          beforeIndex = currentIndex
+
+          config.edit {
+            putInt("currentIndex", currentIndex)
+          }
+          mainModel.showStatus = true
+          handler.removeCallbacks(timeRunnable)
+          handler.postDelayed(timeRunnable, 5000)
+
+          if (::livePlayerFragment.isInitialized)
+            livePlayerFragment.play(mainModel.currentLiveItem)
+        }
+      }
+    })
   }
 
   @SuppressLint("GestureBackNavigation")
@@ -163,40 +160,32 @@ class MainActivity : AppCompatActivity() {
        * 上
        */
       KeyEvent.KEYCODE_DPAD_UP -> {
-        var currentIndex = binding.vp.currentItem
-        if (currentIndex == 0) {
-          currentIndex = Int.MAX_VALUE
-        } else {
-          currentIndex--
-        }
-        binding.vp.setCurrentItem(currentIndex, true)
+        mainModel.up()
       }
 
       /**
        * 下
        */
       KeyEvent.KEYCODE_DPAD_DOWN -> {
-        val currentIndex = binding.vp.currentItem
-        val count = binding.vp.adapter?.itemCount ?: 0
-        if (currentIndex == count - 1) {
-          binding.vp.setCurrentItem(0, true)
-        } else {
-          binding.vp.setCurrentItem(currentIndex + 1, true)
-        }
+        mainModel.down()
       }
 
       // ENTER、OK（确认）
-      KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_DPAD_CENTER -> {
-        currentFragment.pauseOrPlay()
+      KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_SPACE -> {
+        if (::livePlayerFragment.isInitialized) {
+          livePlayerFragment.playOrPause()
+        }
       }
 
       // 静音
       KeyEvent.KEYCODE_MUTE -> {
-        audioManager.setStreamVolume(
-          AudioManager.STREAM_MUSIC,
-          0,
-          AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE
-        )
+        try {
+          audioManager.setStreamVolume(
+            AudioManager.STREAM_SYSTEM,
+            0,
+            AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE
+          )
+        } catch (_: SecurityException) {}
       }
 
       KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_DPAD_LEFT -> {
@@ -260,11 +249,8 @@ class MainActivity : AppCompatActivity() {
         if (!mainModel.showStatus) {
           mainModel.showStatus = true
         }
-
-        mainModel.currentLiveItem.num = numberStringBuilder.toString()
-          .toIntOrNull() ?: return super.onKeyUp(keyCode, event)
-
-        mainModel.notifyChange()
+        val number = numberStringBuilder.toString().toIntOrNull() ?: return super.onKeyUp(keyCode, event)
+        mainModel.currentIndex = number - 1
 
         handler.removeCallbacks(numberRunnable)
         handler.postDelayed(numberRunnable, 4000)
@@ -287,21 +273,5 @@ class MainActivity : AppCompatActivity() {
       KeyEvent.KEYCODE_9, KeyEvent.KEYCODE_NUMPAD_9 -> "9"
       else -> ""
     }
-  }
-
-  private fun initViewPager(vp: ViewPager2) {
-    vp.run {
-      isUserInputEnabled = false
-      offscreenPageLimit = 1
-      adapter = MainPageAdapter()
-    }
-  }
-
-  inner class MainPageAdapter : FragmentStateAdapter(supportFragmentManager, lifecycle) {
-
-    override fun createFragment(position: Int) = fragments[position]
-
-    override fun getItemCount() = fragments.size
-
   }
 }
