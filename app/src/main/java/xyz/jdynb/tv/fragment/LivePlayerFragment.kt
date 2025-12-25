@@ -31,7 +31,7 @@ import xyz.jdynb.tv.utils.getSerializableForKey
 import xyz.jdynb.tv.utils.setSerializableArguments
 import java.io.ByteArrayInputStream
 
-class LivePlayerFragment: Fragment(), Playable {
+open class LivePlayerFragment: Fragment(), Playable {
 
   companion object {
     fun newInstance(currentLiveItem: LiveChannelModel): LivePlayerFragment {
@@ -212,6 +212,39 @@ class LivePlayerFragment: Fragment(), Playable {
     }
   }
 
+
+  /**
+   * 是否应该加载资源
+   *
+   * @param url 加载地址
+   *
+   * @return null 则默认加载，否则指定加载资源
+   */
+  protected fun shouldInterceptRequest(url: String): WebResourceResponse? {
+    if (url.endsWith(".webp")) {
+      return createEmptyResponse("image/*")
+    }
+    return null
+  }
+
+  /**
+   * 是否拦截跳转
+   *
+   * @return true 拦截 false 不拦截
+   */
+  protected fun shouldOverride(url: String): Boolean {
+    // 自定义跳转逻辑
+    // 例如：拦截特定协议，打开外部应用等
+
+    Log.i(TAG, "shouldOverride: $url")
+    return false
+  }
+
+  protected fun onPageFinished(url: String) {
+
+  }
+
+
   /**
    * WebViewClient 配置
    */
@@ -231,33 +264,6 @@ class LivePlayerFragment: Fragment(), Playable {
         val url = request?.url?.toString() ?: return createEmptyResponse()
 
         return shouldInterceptRequest(url) ?: super.shouldInterceptRequest(view, request)
-      }
-
-      /**
-       * 是否应该加载资源
-       *
-       * @param url 加载地址
-       *
-       * @return null 则默认加载，否则指定加载资源
-       */
-      private fun shouldInterceptRequest(url: String): WebResourceResponse? {
-        if (url.endsWith(".webp")) {
-          return createEmptyResponse("image/*")
-        }
-        return null
-      }
-
-      /**
-       * 是否拦截跳转
-       *
-       * @return true 拦截 false 不拦截
-       */
-      private fun shouldOverride(url: String): Boolean {
-        // 自定义跳转逻辑
-        // 例如：拦截特定协议，打开外部应用等
-
-        Log.i(TAG, "shouldOverride: $url")
-        return false
       }
 
       override fun shouldOverrideUrlLoading(
@@ -284,8 +290,9 @@ class LivePlayerFragment: Fragment(), Playable {
         // 页面加载完成
         super.onPageFinished(view, url)
 
+        onPageFinished(url)
         webView.execJs(JsType.CLEAR_YSP)
-        webView.execJs(JsType.PLAY_YSP, "pid" to channelModel.pid, "vid" to channelModel.streamId)
+        // webView.execJs(JsType.PLAY_YSP, "pid" to channelModel.pid, "vid" to channelModel.streamId)
         webView.execJs(JsType.FULLSCREEN_YSP)
       }
     }

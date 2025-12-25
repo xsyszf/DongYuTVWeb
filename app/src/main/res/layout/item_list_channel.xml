@@ -15,6 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/tv_channel"
+        android:selected="@{m.selected}"
         android:background="@drawable/bg_btn"
         android:minWidth="200dp"
         android:orientation="horizontal"
@@ -23,7 +24,6 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:selected="@{m.selected}"
             android:text="@{String.valueOf(m.num)}"
             android:textColor="@color/white"
             android:textSize="23sp"

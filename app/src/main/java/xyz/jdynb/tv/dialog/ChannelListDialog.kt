@@ -17,7 +17,6 @@ import xyz.jdynb.tv.databinding.DialogChannelListBinding
 import xyz.jdynb.tv.model.LiveChannelGroupModel
 import xyz.jdynb.tv.model.LiveChannelModel
 
-
 class ChannelListDialog(context: Context) :
   EngineDialog<DialogChannelListBinding>(context, R.style.ChannelDialogStyle) {
 
@@ -107,7 +106,7 @@ class ChannelListDialog(context: Context) :
   private fun scrollToPositionWithCenter(position: Int) {
     val layoutManager = binding.rvChannel.layoutManager as LinearLayoutManager
     // 先获取RecyclerView和item的尺寸
-    binding.rvChannel.post({
+    binding.rvChannel.post {
       val recyclerViewHeight: Int = binding.rvChannel.height
       // 获取指定位置的item view（必须等待布局完成）
       val child: View? = layoutManager.findViewByPosition(position)
@@ -119,16 +118,16 @@ class ChannelListDialog(context: Context) :
         // 如果item还没显示，先滚动到大致位置
         layoutManager.scrollToPosition(position)
         // 再次尝试获取view并调整位置
-        binding.rvChannel.post({
+        binding.rvChannel.post {
           val childAgain: View? = layoutManager.findViewByPosition(position)
           if (childAgain != null) {
             val itemHeight = childAgain.height
             val offset = recyclerViewHeight / 2 - itemHeight / 2
             layoutManager.scrollToPositionWithOffset(position, offset)
           }
-        })
+        }
       }
-    })
+    }
   }
 
   @SuppressLint("GestureBackNavigation")

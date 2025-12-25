@@ -293,7 +293,7 @@ class MainActivity : AppCompatActivity() {
       }
 
       // 菜单
-      KeyEvent.KEYCODE_MENU -> {
+      KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_P -> {
         binding.btnMenu.callOnClick()
       }
 
@@ -315,8 +315,8 @@ class MainActivity : AppCompatActivity() {
         if (!mainModel.showStatus) {
           mainModel.showStatus = true
         }
-        val number =
-          numberStringBuilder.toString().toIntOrNull() ?: return super.onKeyUp(keyCode, event)
+        val number = numberStringBuilder.toString().toIntOrNull()
+          ?: return super.onKeyUp(keyCode, event)
         mainModel.currentIndex = number - 1
 
         handler.removeCallbacks(numberRunnable)
