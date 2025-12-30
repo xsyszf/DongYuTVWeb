@@ -1,6 +1,6 @@
 package xyz.jdynb.tv.fragment
 
-import android.util.Log
+import android.webkit.WebResourceResponse
 
 class SimpleLivePlayerFragment : LivePlayerFragment() {
 
@@ -10,7 +10,20 @@ class SimpleLivePlayerFragment : LivePlayerFragment() {
 
   }
 
+  override fun shouldInterceptRequest(url: String): WebResourceResponse? {
+    val shouldIntercept = super.shouldInterceptRequest(url)
+    if (url.endsWith("dy-crypto-js.min.js")) {
+      // 注入 CRYPTO.JS
+      return createCryptoJsResponse()
+    }
+    return shouldIntercept
+  }
+
   override fun onLoadUrl(url: String?) {
     webView.loadUrl("file:///android_asset/html/simple_player.html")
+  }
+
+  override fun resumeOrPause() {
+    webView.evaluateJavascript("resumeOrPause()", null)
   }
 }

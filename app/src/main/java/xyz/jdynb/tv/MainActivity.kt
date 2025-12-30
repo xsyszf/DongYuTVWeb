@@ -119,11 +119,11 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
       fragmentClazz.classLoader!!,
       tag
     ))
-    supportFragmentManager.fragments.forEach {
+    /*supportFragmentManager.fragments.forEach {
       if (it != null && it != target && it.isAdded && it.id == R.id.fragment) {
         transaction.hide(it)
       }
-    }
+    }*/
     transaction.replace(R.id.fragment, target, tag)
     transaction.commitNow()
   }

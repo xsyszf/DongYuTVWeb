@@ -93,7 +93,9 @@ abstract class LivePlayerFragment: Fragment(), Playable {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     playerName = LivePlayer.getLivePlayerForClass(this.javaClass).player
-    playerConfig = mainViewModel.liveModel.player.find { it.name == playerName } ?: LiveModel.Player()
+    val player = mainViewModel.currentChannelModel.value?.player ?: return
+    playerConfig = mainViewModel.liveModel.player.find { it.id == player } ?: LiveModel.Player()
+    Log.i(TAG, "playerConfig: $playerConfig")
   }
 
   override fun onCreateView(
@@ -354,6 +356,16 @@ abstract class LivePlayerFragment: Fragment(), Playable {
       mimeType,
       "UTF-8",
       emptyByteArrayStream
+    )
+  }
+
+  protected fun createCryptoJsResponse(): WebResourceResponse {
+    val cryptoJs = requireContext().assets.open("js/lib/dy-crypto-js.min.js")
+    // 创建一个空的响应
+    return WebResourceResponse(
+      "application/javascript",
+      "UTF-8",
+      cryptoJs
     )
   }
 

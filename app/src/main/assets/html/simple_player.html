@@ -29,6 +29,7 @@
             justify-content: center;
         }
     </style>
+    <script src="../js/lib/dy-crypto-js.min.js"></script>
 </head>
 <body>
 <video autoplay id="video"></video>
@@ -38,9 +39,29 @@
 </body>
 
 <script>
+    const video = document.querySelector("#video")
+
+    video.addEventListener('loadeddata', function() {
+        hideLoading()
+    })
+
     function hideLoading() {
         const loading = document.getElementById('loading');
         loading.style.display = 'none';
+    }
+
+    function resumeOrPause() {
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
+    }
+
+    function playLive(url) {
+        video.volume = 1
+        video.src = url
+        video.play()
     }
 </script>
 </html>

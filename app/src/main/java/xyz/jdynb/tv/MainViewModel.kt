@@ -43,7 +43,8 @@ class MainViewModel : ViewModel() {
     /**
      * 直播配置地址
      */
-    private const val LIVE_CONFIG_URL = "https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/live.jsonc"
+    private const val LIVE_CONFIG_URL =
+      "https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/live.jsonc"
 
   }
 
@@ -163,7 +164,9 @@ class MainViewModel : ViewModel() {
    */
   @Suppress("UNCHECKED_CAST")
   private fun getFragmentClassForChannel(channelModel: LiveChannelModel): Class<LivePlayerFragment> {
-    return LivePlayer.getLivePlayerForPlayer(channelModel.player).clazz as Class<LivePlayerFragment>
+    val name = liveModel.player.find { it.id == channelModel.player }?.name
+      ?: throw IllegalStateException("没有获取到对应的播放器")
+    return LivePlayer.getLivePlayerForPlayer(name).clazz as Class<LivePlayerFragment>
   }
 
   private val _showCurrentChannel = MutableStateFlow(true)

@@ -37,6 +37,19 @@
         "play": [],
         "resume_pause": []
       }
+    },
+    {
+      "id": "hebei",
+      "name": "simple",
+      "script": {
+        "init": [
+          "https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/js/hebei/init.js"
+        ],
+        "play": [
+          "https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/js/hebei/play.js"
+        ],
+        "resume_pause": []
+      }
     }
   ],
   // 播放频道列表
@@ -496,6 +509,52 @@
           "args": {
             "liveUrl": "https://www.hkstv.tv/webcast/livestream/mutfysrq/playlist.m3u8?hls_ctx=7144stj2"
           }
+        }
+      ]
+    },
+    {
+      "channelType": "河北卫视",
+      "player": "hebei",
+      "channelList": [
+        {
+          "channelName": "河北卫视",
+          "tvLogo": "https://web.cmc.hebtv.com/cms/rmt0336/upload/Image/9/9tpklm/2025/07/18/30aaea69a1de46a881cef5d759d30b3e.png",
+          "number": 64
+        },
+        {
+          "channelName": "经济生活",
+          "tvLogo": "https://web.cmc.hebtv.com/cms/rmt0336/upload/Image/9/9tpklm/2025/07/18/adecee678ddd44c0a4deb60b2f9a998f.png",
+          "number": 65
+        },
+        {
+          "channelName": "三农频道",
+          "tvLogo": "https://web.cmc.hebtv.com/cms/rmt0336/upload/Image/9/9tpklm/2025/07/18/1ce75956a2994fea8a263a2305e5850d.png",
+          "number": 66
+        },
+        {
+          "channelName": "河北都市",
+          "tvLogo": "https://web.cmc.hebtv.com/cms/rmt0336/upload/Image/9/9tpklm/2025/07/18/fd8cd90c9c62436f9b582cfa9e99236e.png",
+          "number": 67
+        },
+        {
+          "channelName": "河北影视剧",
+          "tvLogo": "https://web.cmc.hebtv.com/cms/rmt0336/upload/Image/9/9tpklm/2025/07/18/a60dc4f8fd8241b893663e53e42c9c9e.png",
+          "number": 68
+        },
+        {
+          "channelName": "少儿科教",
+          "tvLogo": "https://web.cmc.hebtv.com/cms/rmt0336/upload/Image/9/9tpklm/2025/07/18/787c59373af7476d8d3bea2ec446c047.png",
+          "number": 69
+        },
+        {
+          "channelName": "文旅·公共",
+          "tvLogo": "https://web.cmc.hebtv.com/cms/rmt0336/upload/Image/9/9tpklm/2025/07/18/5666e0c8381f47afa7d14bdfebb69cd3.png",
+          "number": 70
+        },
+        {
+          "channelName": "三佳购物",
+          "tvLogo": "https://web.cmc.hebtv.com/cms/rmt0336/upload/Image/9/9tpklm/2025/07/18/ef010e11f31548e589ddb15fcef020fd.png",
+          "number": 71
         }
       ]
     }

@@ -14,7 +14,7 @@ import java.net.URL
 
 object JsManager {
 
-  private val jsMap = mutableMapOf<JsType, List<String>>()
+  private val jsMap = mutableMapOf<String, List<String>>()
 
   private fun createConnection(url: String): HttpURLConnection {
     val connection = URL(url).openConnection() as HttpURLConnection
@@ -83,26 +83,27 @@ object JsManager {
         if (playerConfig.script.async) {
           scripts.map {
             async {
-              getOrWriteJs(it, playerConfig.name, type)
+              getOrWriteJs(it, playerConfig.id, type)
             }
           }.map {
             it.await()
           }
         } else {
           scripts.map {
-            getOrWriteJs(it, playerConfig.name, type)
+            getOrWriteJs(it, playerConfig.id, type)
           }
         }
-      } catch (_: Exception) {
+      } catch (e: Exception) {
+        Log.e("JsManager", e.message, e)
         null
       }
     } as List<String>?
 
   suspend fun getJs(playerConfig: LiveModel.Player, type: JsType): List<String>? {
-    val jsList = jsMap[type]
+    var jsList = jsMap[playerConfig.id + "-" + type.type]
     if (jsList.isNullOrEmpty()) {
-      getJsList(playerConfig, type)?.also {
-        jsMap[type] = it
+      jsList = getJsList(playerConfig, type)?.also {
+        jsMap[playerConfig.id + "-" + type.type] = it
       }
     }
     return jsList
@@ -124,7 +125,7 @@ object JsManager {
           }
         }
         evaluateJavascript(result) { i ->
-          Log.i("JsManager", i)
+          // Log.i("JsManager", i)
         }
       }
     }
