@@ -115,7 +115,7 @@ class MainViewModel : ViewModel() {
         init()
       }
       SPKeyConstants.CURRENT_INDEX.put(it)
-      flowOf(channelModelList.value.getOrNull(it) ?: LiveChannelModel())
+      flowOf(channelModelList.value.getOrNull(it) ?: getDefaultChannelModel())
     }
     .onEach {
       _currentChannelType.value = it.channelType
@@ -123,7 +123,7 @@ class MainViewModel : ViewModel() {
       SPKeyConstants.CURRENT_CHANNEL.put(json.encodeToString(it))
     }
     .catch {
-      emit(LiveChannelModel())
+      emit(getDefaultChannelModel())
     }
     .stateIn(
       viewModelScope,
@@ -155,9 +155,19 @@ class MainViewModel : ViewModel() {
     return SPKeyConstants.CURRENT_CHANNEL.get<String?>()?.let {
       runCatching {
         json.decodeFromString<LiveChannelModel>(it)
-      }.getOrDefault(LiveChannelModel())
-    } ?: LiveChannelModel()
+      }.getOrDefault(getDefaultChannelModel())
+    } ?: getDefaultChannelModel()
   }
+
+  private fun getDefaultChannelModel() = LiveChannelModel(
+    channelName = "CCTV1",
+    pid = "600001859",
+    tvLogo = "https://resources.yangshipin.cn/assets/oms/image/202306/d57905b93540bd15f0c48230dbbbff7ee0d645ff539e38866e2d15c8b9f7dfcd.png?imageMogr2/format/webp",
+    streamId = "2024078201",
+    channelType = "央视",
+    number = 1,
+    player = "ysp"
+  )
 
   /**
    * 通过渠道获取到对应的 Fragment

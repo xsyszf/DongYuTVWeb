@@ -11,19 +11,19 @@ import xyz.jdynb.tv.constants.LiveModeConstants
 @Serializable
 data class LiveChannelModel(
   @SerialName("channelName")
-  var channelName: String = "CCTV1",
+  var channelName: String = "",
   @SerialName("pid")
-  var pid: String? = "600001859",
+  var pid: String? = "",
   @SerialName("tvLogo")
-  var tvLogo: String = "https://resources.yangshipin.cn/assets/oms/image/202306/d57905b93540bd15f0c48230dbbbff7ee0d645ff539e38866e2d15c8b9f7dfcd.png?imageMogr2/format/webp",
+  var tvLogo: String = "",
   @SerialName("streamId")
-  var streamId: String? = "2024078201",
+  var streamId: String? = "",
   @SerialName("channelType")
-  var channelType: String = "央视",
+  var channelType: String = "",
   /**
    * 直播序号（对应键盘输入）唯一值
    */
-  var number: Int = 1,
+  var number: Int = 0,
 
   /**
    * 额外所需的参数
@@ -33,7 +33,7 @@ data class LiveChannelModel(
   /**
    * 播放器 id
    */
-  var player: String = "ysp",
+  var player: String = "",
 ) : BaseObservable() {
 
   @get:Bindable

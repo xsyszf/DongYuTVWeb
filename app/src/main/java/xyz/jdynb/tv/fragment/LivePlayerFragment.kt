@@ -232,6 +232,9 @@ abstract class LivePlayerFragment: Fragment(), Playable {
       loadsImagesAutomatically = true // 禁止加载图片
       // blockNetworkImage = true
       mediaPlaybackRequiresUserGesture = false
+
+      allowFileAccessFromFileURLs = true
+      allowUniversalAccessFromFileURLs = true
     }
   }
 
