@@ -93,6 +93,30 @@
           "https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/js/jiangxi/play.js"
         ]
       }
+    },
+    {
+      "id": "shandong",
+      "name": "simple",
+      "script": {
+        "init": [
+          "https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/js/shandong/init.js"
+        ],
+        "play": [
+          "https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/js/shandong/play.js"
+        ]
+      }
+    },
+    {
+      "id": "zhejiang",
+      "name": "simple",
+      "script": {
+        "init": [
+          "https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/js/zhejiang/init.js"
+        ],
+        "play": [
+          "https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/js/zhejiang/play.js"
+        ]
+      }
     }
   ],
   // 播放频道列表
