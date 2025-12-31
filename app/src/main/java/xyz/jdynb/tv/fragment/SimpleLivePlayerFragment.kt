@@ -158,7 +158,7 @@ class SimpleLivePlayerFragment : LivePlayerFragment() {
     /*requireContext().assets.open("js/jiangsu/init.js").use {
       it.readBytes().toString(Charsets.UTF_8)
     }.let {
-     val js = it.replace("{{liveUrl}}", "https://litchi-play-encrypted-site.jstv.com/applive/jswspro.m3u8")
+     val js = it.replace("{{liveUrl}}", "https://litchi-play-encrypted-site.jstv.com/4klive/jsws4kpro.m3u8")
       webView.evaluateJavascript(js, null)
     }*/
   }
