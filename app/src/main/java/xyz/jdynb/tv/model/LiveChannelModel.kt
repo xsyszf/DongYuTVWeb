@@ -33,6 +33,10 @@ data class LiveChannelModel(
    * 播放器 id
    */
   var player: String = "",
+  /**
+   * 是否隐藏
+   */
+  var hidden: Boolean = false
 ) : BaseObservable() {
 
   @get:Bindable

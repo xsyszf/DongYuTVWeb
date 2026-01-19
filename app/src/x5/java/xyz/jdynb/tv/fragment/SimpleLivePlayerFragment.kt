@@ -153,10 +153,10 @@ class SimpleLivePlayerFragment: LivePlayerFragment() {
     if (url.endsWith("dy-crypto-js.min.js")) {
       // 注入 CRYPTO.JS
       return createCryptoJsResponse()
-    } /*else if (url.endsWith("dy-http-util")) {
+    } else if (url.endsWith("dy-http-util")) {
       // 注入网络请求 JS
       return createHttpUtilJsResponse()
-    } */else if (url.endsWith("dy-hls.min.js")) {
+    } else if (url.endsWith("dy-hls.min.js")) {
       return createHlsJsResponse()
     }
 

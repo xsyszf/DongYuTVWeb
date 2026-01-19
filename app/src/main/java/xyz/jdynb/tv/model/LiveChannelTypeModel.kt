@@ -9,6 +9,7 @@ import xyz.jdynb.tv.BR
 data class LiveChannelTypeModel(
   val channelType: String = "央视",
   val player: String = "ysp",
+  val hidden: Boolean = false,
   val channelList: List<LiveChannelModel> = listOf()
 ): BaseObservable() {
 

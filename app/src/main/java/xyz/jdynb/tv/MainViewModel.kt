@@ -137,15 +137,20 @@ class MainViewModel : ViewModel() {
   private suspend fun init() = withContext(Dispatchers.IO) {
     val liveContent = NetworkUtils.getResponseBodyCache(LIVE_CONFIG_URL, "live.jsonc")
     _liveModel = json.decodeFromString<LiveModel>(liveContent)
-    _channelTypeModelList.value = liveModel.channel
+    _channelTypeModelList.value = liveModel.channel.filter { !it.hidden }
     _channelModelList.value = _channelTypeModelList.value.flatMap { liveChannelTypeModel ->
       liveChannelTypeModel.channelList.onEach {
+        if (liveChannelTypeModel.hidden != it.hidden) {
+          it.hidden = liveChannelTypeModel.hidden
+        }
         if (it.player.isEmpty()) {
           it.player = liveChannelTypeModel.player
         }
         it.channelType = liveChannelTypeModel.channelType
       }
-    }.distinctBy { it.number }.sortedBy { it.number } // 去重，并且升序排序
+    }.filter { !it.hidden }.onEachIndexed { index, model ->
+      model.number = index + 1 // 设置频道序号
+    }//distinctBy { it.number }.sortedBy { it.number } // 去重，并且升序排序
   }
 
   /**

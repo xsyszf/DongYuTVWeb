@@ -25,6 +25,10 @@
 
 频道完整配置文件 `main/assets/live.jsonc` [live.jsonc](https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/live.jsonc)
 
+最新调整:
+
+- 去除 `number` 频道号码
+
 ### 1. 对于普通不懂开发的用户
 
 修改 channel 频道列表
@@ -41,7 +45,7 @@
               {
                 "channelName": "香港卫视", // 频道名称 (需要唯一)
                 "tvLogo": "", // logo 目前没用到，可以不写
-                "number": 6, // 填写唯一的频道号码，用于数字换台
+                "number": 6, // 填写唯一的频道号码，用于数字换台 (废弃)
                 "player": "common", // 播放器 id，这个上方已经内置了，只需要写 common
                 "args": { // 播放参数，固定 liveUrl 即可
                   "liveUrl": "https://wwww.tv.com/playlist.m3u8?"
@@ -116,7 +120,15 @@
 
 > `playLive` 是内置的方法，可以直接调用传入地址进行播放
 
+> 注意：使用fetch请求时，有些会检测Referer请求头，请设置X-Referer请求头，内部会进行处理，
+> 请求头数据请使用 `X-Body` 添加到请求头中，这里的数据将作为 Body 发送，
+
 #### `init.js`, 对应上面 init 执行的脚本
+
+##### 通过普通 fetch 发送请求
+
+这种方式有限制，有些请求会检测 `Referer` 请求头，请设置自定义请求头 `X-Referer`，
+推荐使用内置的 [HttpUtil](/app/src/main/assets/js/lib/dy-http-util.js) 发送请求
 
 ```js
 (function() {
@@ -137,7 +149,10 @@
         "sec-fetch-dest": "empty",
         "sec-fetch-mode": "cors",
         "sec-fetch-site": "same-site",
-        "Referer": "https://www.hebtv.com/"
+        // 如果不检测 Referer的话，可以正常写
+        "X-Referer": "https://www.hebtv.com/" // X-Referer 会自动在请求头添加 Referer，防止被检测
+        // 必须在设置了 X-Referer 之后，X-Body 才有效
+        "X-Body": "" // 这里设置请求体数据
       },
       "body": null,
       "method": "GET"
@@ -161,6 +176,32 @@
     })
 })();
 ```
+##### 使用 HttpUtil 发送请求
+
+内置在 `simple` 播放器中的，可以直接使用，推荐使用这种方式发送请求
+
+```js
+const response = await HttpUtil.post(`https://feiying.litenews.cn/api/v1/auth/exchange?t=${now}&s=${s}`, body, {
+    headers: {
+        "accept": "*",
+        "accept-language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+        "content-type": "text/plain",
+        "priority": "u=1, i",
+        "sec-ch-ua": "\"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "cross-site",
+        "Referer": "https://v.iqilu.com/"
+    },
+    responseType: 'text'
+})
+const result = JSON.parse(decrypt(response.data))
+playLive(result.data)
+```
+
+`HttpUtil` 的定义参见 [HttpUtil](/app/src/main/assets/js/lib/dy-http-util.js)
 
 #### `play.js` 处理播放
 
@@ -208,8 +249,10 @@
             justify-content: center;
         }
     </style>
-    <!-- 这里内部做了处理的，所以这里以这种形式引入 -->
+    <!-- 这里内部做了处理 -->
+    <script src="../js/lib/dy-http-util.js"></script>
     <script src="../js/lib/dy-crypto-js.min.js"></script>
+    <script src="../js/lib/dy-hls.min.js"></script>
 </head>
 <body>
 <video autoplay id="video"></video>
@@ -238,10 +281,65 @@
         }
     }
 
-    function playLive(url) {
+    let hls = null;
+
+    function playLive(url, headers) {
         video.volume = 1
-        video.src = url
-        video.play()
+        
+        // 检查是否支持 HLS.js 且为 m3u8 文件
+        if (Hls.isSupported() && url.includes('.m3u8')) {
+            if (hls) {
+                hls.destroy();
+            }
+            
+            hls = new Hls({
+                debug: false,
+                xhrSetup: function(xhr, url) {
+                    // xhr.setRequestHeader('X-Referer', headers['Referer'])
+                    // 这里设置请求头
+                    if (headers) {
+                        for (const key in headers) {
+                            xhr.setRequestHeader(key, headers[key]);
+                        }
+                    }
+                }
+            });
+            
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                video.play();
+            });
+            
+            hls.on(Hls.Events.ERROR, function(event, data) {
+                console.error('HLS Error:' + JSON.stringify(data));
+                if (data.fatal) {
+                    switch(data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.log('Network error, trying to recover');
+                            hls.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.log('Media error, trying to recover');
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            console.log('Fatal error, destroying HLS instance');
+                            hls.destroy();
+                            break;
+                    }
+                }
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // iOS Safari 原生支持
+            video.src = url;
+            video.play();
+        } else {
+            // 其他格式直接播放
+            video.src = url;
+            video.play();
+        }
     }
 </script>
 </html>
