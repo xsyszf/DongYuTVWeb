@@ -51,8 +51,9 @@
       "name": "base",
       "url": "https://tv.gxtv.cn/channel/channelivePlay_{{id}}.html",
       "script": {
-        "init": [],
-        "play": []
+        "init": ["https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/js/guangxi/init.js"],
+        "play": ["https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/js/guangxi/play.js"],
+        "resume_pause": ["https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/js/guangxi/resume_pause.js"]
       }
     },
     {
