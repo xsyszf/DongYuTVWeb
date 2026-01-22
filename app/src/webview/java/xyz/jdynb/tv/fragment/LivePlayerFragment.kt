@@ -126,8 +126,9 @@ abstract class LivePlayerFragment : Fragment(), Playable {
 
     initWebView(webView)
 
-    val url = mainViewModel.liveModel.player.find { it.name == playerName }?.url
+    val url = playerConfig.url//mainViewModel.liveModel.player.find { it.name == playerName }?.url
     loadUrl = url ?: ""
+    Log.i(TAG, "loadUrl: $url playerName: $playerName")
     onLoadUrl(url, currentChannelModel)
 
     viewLifecycleOwner.lifecycleScope.launch {

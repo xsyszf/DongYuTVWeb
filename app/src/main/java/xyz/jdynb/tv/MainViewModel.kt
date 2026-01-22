@@ -44,7 +44,7 @@ class MainViewModel : ViewModel() {
      * 直播配置地址
      */
     private const val LIVE_CONFIG_URL =
-      "https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/live-2.jsonc"
+      "https://gitee.com/jdy2002/DongYuTvWeb/raw/master/app/src/main/assets/live-3.jsonc"
 
   }
 
@@ -135,7 +135,7 @@ class MainViewModel : ViewModel() {
    * 初始化数据
    */
   private suspend fun init() = withContext(Dispatchers.IO) {
-    val liveContent = NetworkUtils.getResponseBodyCache(LIVE_CONFIG_URL, "live-2.jsonc")
+    val liveContent = NetworkUtils.getResponseBodyCache(LIVE_CONFIG_URL, "live-3.jsonc")
     _liveModel = json.decodeFromString<LiveModel>(liveContent)
     _channelTypeModelList.value =
       liveModel.channel.filter {
