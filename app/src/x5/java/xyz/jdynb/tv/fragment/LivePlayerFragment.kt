@@ -4,12 +4,16 @@ import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.JavascriptInterface
+import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import com.drake.engine.base.EngineFragment
 import com.tencent.smtt.export.external.interfaces.ConsoleMessage
 import com.tencent.smtt.export.external.interfaces.PermissionRequest
-import com.tencent.smtt.export.external.interfaces.SslErrorHandler
 import com.tencent.smtt.export.external.interfaces.WebResourceRequest
 import com.tencent.smtt.export.external.interfaces.WebResourceResponse
 import com.tencent.smtt.sdk.WebChromeClient
@@ -23,16 +27,16 @@ import xyz.jdynb.tv.MainViewModel
 import xyz.jdynb.tv.R
 import xyz.jdynb.tv.databinding.FragmentLivePlayerBinding
 import xyz.jdynb.tv.enums.JsType
+import xyz.jdynb.tv.enums.LivePlayer
 import xyz.jdynb.tv.event.Playable
 import xyz.jdynb.tv.model.LiveChannelModel
 import xyz.jdynb.tv.model.LiveModel
 import xyz.jdynb.tv.model.LivePlayerModel
+import xyz.jdynb.tv.utils.NetworkUtils.inputStream
 import xyz.jdynb.tv.utils.X5JsManager.execJs
-import xyz.jdynb.tv.utils.toArray
 import java.io.ByteArrayInputStream
 
-abstract class LivePlayerFragment :
-  EngineFragment<FragmentLivePlayerBinding>(R.layout.fragment_live_player), Playable {
+abstract class LivePlayerFragment : Fragment(), Playable {
 
   companion object {
 
@@ -41,11 +45,35 @@ abstract class LivePlayerFragment :
     const val USER_AGENT =
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 
+    private const val JS_INTERFACE_NAME = "AndroidVideo"
+
+    /**
+     * 离开的最大时间
+     */
+    private const val MAX_LEAVE_TIME = 30 * 1000L
+
   }
+
+  private var _binding: FragmentLivePlayerBinding? = null
+
+  protected val binding get() = _binding!!
 
   protected val webView get() = binding.webview
 
+  private var videoJsInterface = VideoJavaScriptInterface()
+
+  private val livePlayerModel = LivePlayerModel()
+
   protected val mainViewModel by activityViewModels<MainViewModel>()
+
+  protected val currentChannelModel get() = mainViewModel.currentChannelModel.value!!
+
+  /**
+   * 播放器名称
+   */
+  lateinit var playerName: String
+
+  protected var loadUrl = ""
 
   /**
    * 播放器配置
@@ -54,22 +82,47 @@ abstract class LivePlayerFragment :
 
   protected var isPageFinished = false
 
-  private val livePlayerModel = LivePlayerModel()
+  private var leaveTime = System.currentTimeMillis()
+
+  inner class VideoJavaScriptInterface {
+    /**
+     * 视频播放事件
+     */
+    @JavascriptInterface
+    fun onPlay() {
+    }
+
+    @JavascriptInterface
+    fun onPause() {
+    }
+
+    @JavascriptInterface
+    fun onKeyDown(key: String, keyCode: Int) {
+    }
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    // val playerName = LivePlayer.getLivePlayerForClass(this.javaClass).player
+    playerName = LivePlayer.getLivePlayerForClass(this.javaClass).player
     val player = mainViewModel.currentChannelModel.value?.player ?: return
     playerConfig = mainViewModel.liveModel.player.find { it.id == player } ?: LiveModel.Player()
     Log.i(TAG, "playerConfig: $playerConfig")
   }
 
-  override fun initData() {
-    binding.m = livePlayerModel
+  override fun onCreateView(
+    inflater: LayoutInflater,
+    container: ViewGroup?,
+    savedInstanceState: Bundle?
+  ): View? {
+    _binding = DataBindingUtil.inflate(inflater, R.layout.fragment_live_player, container, false)
+    return _binding?.root
   }
 
   @SuppressLint("ClickableViewAccessibility")
-  override fun initView() {
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+    binding.m = livePlayerModel
+
     binding.webview.setOnTouchListener { v, event ->
       // 拦截触摸事件
       true
@@ -77,7 +130,10 @@ abstract class LivePlayerFragment :
 
     initWebView(webView)
 
-    onLoadUrl(playerConfig.url)
+    val url = playerConfig.url//mainViewModel.liveModel.player.find { it.name == playerName }?.url
+    loadUrl = url ?: ""
+    Log.i(TAG, "loadUrl: $url playerName: $playerName")
+    onLoadUrl(url, currentChannelModel)
 
     viewLifecycleOwner.lifecycleScope.launch {
       mainViewModel.currentChannelModel.collectLatest {
@@ -97,10 +153,34 @@ abstract class LivePlayerFragment :
     }
   }
 
-  protected open fun onLoadUrl(url: String?) {
-    url ?: return
-    webView.loadUrl(url)
+  override fun refresh() {
+    mainViewModel.currentChannelModel.value?.let {
+      play(it)
+    }
   }
+
+  /**
+   * 执行加载 URL
+   *
+   * @param url 加载的 URL
+   * @param channelModel 当前频道信息
+   */
+  abstract fun onLoadUrl(url: String?, channelModel: LiveChannelModel)
+
+  /**
+   * 是否拦截跳转
+   *
+   * @return true 拦截 false 不拦截
+   */
+  abstract fun shouldOverride(url: String): Boolean
+
+  /**
+   * 页面加载完成时的回调
+   *
+   * @param url 加载的 URL
+   * @param channelModel 当前频道信息
+   */
+  abstract fun onPageFinished(url: String, channelModel: LiveChannelModel)
 
   /**
    * 执行 JS 脚本
@@ -122,15 +202,6 @@ abstract class LivePlayerFragment :
     }
   }
 
-  override fun play(channel: LiveChannelModel) {
-    // 默认的播放
-    execJs(JsType.PLAY, *channel.toArray())
-  }
-
-  override fun resumeOrPause() {
-    execJs(JsType.RESUME_PAUSE)
-  }
-
   /**
    * 创建并配置 WebView
    */
@@ -141,6 +212,8 @@ abstract class LivePlayerFragment :
       setupWebSettings()
       setupWebChromeClient()
       setupWebViewClient()
+      // 添加自定义的接口
+      addJavascriptInterface(videoJsInterface, JS_INTERFACE_NAME)
     }
   }
 
@@ -157,6 +230,7 @@ abstract class LivePlayerFragment :
 
       isFocusable = false
 
+      // 获取当前的 UA，可以获取当前的浏览器内核版本
       Log.i(TAG, "userAgent: $userAgentString")
       userAgentString = USER_AGENT
 
@@ -193,8 +267,8 @@ abstract class LivePlayerFragment :
       // blockNetworkImage = true
       mediaPlaybackRequiresUserGesture = false
 
-      setAllowFileAccessFromFileURLs(true)
       setAllowUniversalAccessFromFileURLs(true)
+      setAllowFileAccessFromFileURLs(true)
     }
   }
 
@@ -230,7 +304,10 @@ abstract class LivePlayerFragment :
    *
    * @return null 则默认加载，否则指定加载资源
    */
-  protected open fun shouldInterceptRequest(url: String, request: WebResourceRequest): WebResourceResponse? {
+  protected open fun shouldInterceptRequest(
+    url: String,
+    request: WebResourceRequest
+  ): WebResourceResponse? {
     if (playerConfig.exclude?.url?.any { it == url } == true) {
       // 通过地址拦截
       return createEmptyResponse("*/*")
@@ -243,39 +320,10 @@ abstract class LivePlayerFragment :
   }
 
   /**
-   * 是否拦截跳转
-   *
-   * @return true 拦截 false 不拦截
-   */
-  protected open fun shouldOverride(url: String): Boolean {
-    // 自定义跳转逻辑
-    // 例如：拦截特定协议，打开外部应用等
-
-    Log.i(TAG, "shouldOverride: $url")
-    return false
-  }
-
-  /**
-   * 页面加载完成时的回调
-   */
-  protected open fun onPageFinished(url: String) {
-    // 默认处理
-    execJs(JsType.INIT, *mainViewModel.currentChannelModel.value.toArray())
-  }
-
-  /**
    * WebViewClient 配置
    */
   private fun WebView.setupWebViewClient() {
     webViewClient = object : WebViewClient() {
-
-      override fun onReceivedSslError(
-        wv: WebView?,
-        handler: SslErrorHandler?,
-        sslError: com.tencent.smtt.export.external.interfaces.SslError?
-      ) {
-        handler?.proceed()
-      }
 
       override fun shouldInterceptRequest(
         view: WebView?,
@@ -312,7 +360,7 @@ abstract class LivePlayerFragment :
         // 页面加载完成
         super.onPageFinished(view, url)
         isPageFinished = true
-        onPageFinished(url)
+        onPageFinished(url, currentChannelModel)
       }
     }
   }
@@ -328,13 +376,44 @@ abstract class LivePlayerFragment :
     )
   }
 
-  protected fun createCryptoJsResponse(): WebResourceResponse {
-    val cryptoJs = requireContext().assets.open("js/lib/dy-crypto-js.min.js")
+  protected fun createResponse(
+    url: String,
+    mimeType: String = "text/plain",
+    headers: Map<String, String> = mapOf(
+      "User-Agent" to USER_AGENT,
+    )
+  ): WebResourceResponse {
+    val allHeaders = mutableMapOf(
+      "Access-Control-Allow-Origin" to "*",
+    )
+    allHeaders.putAll(headers)
+    val index = url.indexOf('/', 12)
+    if (index != -1) {
+      allHeaders.put("Referer", url.substring(0, index))
+    } else {
+      allHeaders.put("Referer", url)
+    }
+    Log.i(TAG, "requestHeaders: $allHeaders")
+    return WebResourceResponse(
+      mimeType,
+      "UTF-8",
+      200, "ok", allHeaders,
+      url.inputStream(
+        headers = allHeaders
+      )
+    )
+  }
+
+  /**
+   * 创建 JS 响应
+   */
+  protected fun createJsResponse(fileName: String): WebResourceResponse {
+    val js = requireContext().assets.open(fileName)
     // 创建一个空的响应
     return WebResourceResponse(
       "application/javascript",
       "UTF-8",
-      cryptoJs
+      js
     )
   }
 
@@ -342,16 +421,25 @@ abstract class LivePlayerFragment :
     super.onResume()
     webView.onResume()
     webView.resumeTimers()
+    Log.i(TAG, "onResume")
+    val now = System.currentTimeMillis()
+    if (now - leaveTime > MAX_LEAVE_TIME) {
+      refresh()
+      leaveTime = now
+    }
   }
 
   override fun onPause() {
     super.onPause()
+    Log.i(TAG, "onPause")
     webView.onPause()
     webView.pauseTimers()
+    leaveTime = System.currentTimeMillis()
   }
 
   override fun onDestroyView() {
     super.onDestroyView()
     webView.destroy()
+    _binding = null
   }
 }

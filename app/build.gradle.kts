@@ -12,6 +12,7 @@ plugins {
 
 android {
   signingConfigs {
+    // TODO: 修改签名信息
     getByName("debug") {
       storeFile = file("D:\\jdy2002\\appkey\\jdy.jks")
       storePassword = "jdy200255"
@@ -68,8 +69,8 @@ android {
     }
 
     // X5 内核已收费，不支持，如果你有付费的，请开启注释，并按照文档进行配置
-    /*create("x5") {
-    }*/
+    create("x5") {
+    }
 
     // 限制太多，不支持
     /*create("gecko") {
@@ -127,7 +128,7 @@ dependencies {
   implementation("io.github.jonanorman.android.webviewup:core:0.1.0")
   implementation("io.github.jonanorman.android.webviewup:download-source:0.1.0")
   implementation(libs.androidx.localbroadcastmanager)
-  // "x5Implementation"(files("libs/tbs_sdk-44382-202411081743-release.aar"))
+  "x5Implementation"(files("libs/tbs_sdk-44382-202411081743-release.aar"))
   // "geckoImplementation"("org.mozilla.geckoview:geckoview:93.0.20210927210923")
   // implementation(files("libs/tbs_sdk-44382-202411081743-release.aar"))
   // "x5Implementation"(project(":x5core_arm64_v8a"))

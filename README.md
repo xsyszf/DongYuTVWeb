@@ -22,6 +22,13 @@
 
 > 使用老式的闭路电视操作，适合老人使用！
 
+## 安装
+
+1. USB数据线连接电视和手机(或U盘)，打开手机的通知，将`仅充电`改为`文件传输`，然后把安装包复制到电视，电视找到相关USB存储，安装apk
+2. 通过无线方式安装，需要 android 11 以上，打开电视 `adb调试`(如何开启请百度)，使用甲壳虫adb助手连接电视后安装
+
+> 具体请百度或问AI，这里不进行详细描述
+
 ## 开机自启动
 
 1. 查找电视的一些设置、App，看看有没有应用自启动相关的设置，对本应用开启自启动。可百度或 Ai 搜索自启动相关文章
@@ -44,6 +51,21 @@ cmd package set-home-activity "xyz.jdynb.tv/.MainActivity" # 设置默认的启�
 reboot # 重启设备
 ```
 > 注意：定制系统可能无效
+
+## X5内核
+
+部分电视系统内核的版本低，所以需要使用X5内核，这个需要自己自行编译此项目，需要一定的android基础。
+
+1. 在[腾讯浏览服务](https://x5.tencent.com/tbs/x5/apps/list) 登录账号，之后创建应用，上传打包后的 apk
+2. 进行实名认证
+3. 在应用列表点击`查看应用`，打开[版本配置列表](https://x5.tencent.com/tbs/x5/app/24e3be34042f4f11a854aee8a956d584/x5public/config)
+4. 获取配置文件，将下载的配置文件，替换 `app/src/x5/assets/tbs/config.tbs` 文件
+5. 修改 `app/src/main/build.gradle` 文件，编辑 `signingConfigs` 签名配置, 选择构建分支为 `x5`，重新进行打包构建 apk
+6. 运行安装完成后，查看是否成功
+
+### 接入文档
+
+[X5网页引擎（公网版）接入文档](https://x5.tencent.com/docs.html#public_net_x5)
 
 ## 自定义频道
 

@@ -69,6 +69,7 @@ class DongYuTVApplication : Application() {
 
       override fun onFailed(code: Int, msg: String?) {
         Log.i(TAG, "onError: $code; msg: $msg")
+        Toast.makeText(this@DongYuTVApplication, "X5内核初始化失败: $msg", Toast.LENGTH_LONG).show()
       }
     })
 
@@ -77,7 +78,9 @@ class DongYuTVApplication : Application() {
     // targetX5Version: config.tbs对应的内核版本号，试用的见 zip 里文件夹的数字后缀
     if (manager.needUpdateLicense() ||  QbSdk.getTbsVersion(this) != TARGET_X5_VERSION) {
       manager.startInstall()
-      Toast.makeText(this, "开始安装X5内核，请耐心等待...", Toast.LENGTH_LONG).show()
+      repeat(3) {
+        Toast.makeText(this, "开始安装X5内核，请耐心等待...", Toast.LENGTH_LONG).show()
+      }
     } else {
       QbSdk.preInit(this, true, localPreInitCallback)
     }
