@@ -7,7 +7,9 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
+import xyz.jdynb.music.utils.SpUtils.getRequired
 import xyz.jdynb.tv.MainActivity
+import xyz.jdynb.tv.constants.SPKeyConstants
 import xyz.jdynb.tv.service.BootService
 
 /**
@@ -23,6 +25,12 @@ class BootReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     val action = intent.action
     Log.d(TAG, "Received broadcast: $action")
+
+    if (!SPKeyConstants.BOOT_AUTO_START.getRequired(true)) {
+      Log.d(TAG, "Boot auto start disabled")
+      return
+    }
+    Log.d(TAG, "Boot auto start enabled")
 
     // 判断是否为开机广播
     if (isBootIntent(action)) {

@@ -27,6 +27,8 @@ import xyz.jdynb.tv.utils.WebViewUpgrade
 import kotlin.system.exitProcess
 import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsControllerCompat
+import xyz.jdynb.music.utils.SpUtils.getRequired
+import xyz.jdynb.tv.constants.SPKeyConstants
 
 class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main) {
 
@@ -98,20 +100,13 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
     channelListDialog = ChannelListDialog(this, mainViewModel)
   }
 
-  override fun onResume() {
-    super.onResume()
-    // 暂时不使用
-    /*if (isFirstResume) {
-      isFirstResume = false
-      return
-    }
-    livePlayerFragment?.refresh()*/
-  }
-
   override fun initData() {
     lifecycleScope.launch {
       mainViewModel.currentChannelType.collect {
+        // 如果当前频道类型为空，则不处理
         if (it.isEmpty()) return@collect
+        Log.i(TAG, "currentChannelType: $it")
+        // 根据当前频道类型获取对应的 Fragment 类
         val fragmentClazz = mainViewModel
           .getFragmentClassForChannel(mainViewModel.currentChannelModel.value!!)
           ?: return@collect
@@ -129,6 +124,11 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
     }
   }
 
+  /**
+   * 显示指定的 Fragment
+   *
+   * @param fragmentClazz Fragment 类
+   */
   private fun showFragment(fragmentClazz: Class<LivePlayerFragment>) {
     val transaction = supportFragmentManager.beginTransaction()
     val tag = fragmentClazz.name
@@ -138,9 +138,13 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
     transaction.commitNow()
   }
 
+  /**
+   * 处理点击事件
+   */
   override fun onClick(v: View) {
     super.onClick(v)
     when (v.id) {
+      // 菜单
       R.id.btn_menu -> {
         if (mainViewModel.channelModelList.value.isEmpty()) {
           return
@@ -148,14 +152,25 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
         channelListDialog.show()
       }
 
+      // 左
       R.id.btn_left -> {
-        mainViewModel.down()
+        if (SPKeyConstants.REVERSE_DIRECTION.getRequired(false)) {
+          mainViewModel.down()
+        } else {
+          mainViewModel.up()
+        }
       }
 
+      // 右
       R.id.btn_right -> {
-        mainViewModel.up()
+        if (SPKeyConstants.REVERSE_DIRECTION.getRequired(false)) {
+          mainViewModel.up()
+        } else {
+          mainViewModel.down()
+        }
       }
 
+      // 刷新
       R.id.btn_refresh -> {
         livePlayerFragment?.refresh()
       }
@@ -165,6 +180,12 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
   override fun dispatchTouchEvent(event: MotionEvent): Boolean {
     mainViewModel.showActions()
     return super.dispatchTouchEvent(event)
+  }
+
+  override fun onBackPressed() {
+    if (handleBackPress()) {
+      super.onBackPressed()
+    }
   }
 
   /**
@@ -182,14 +203,22 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
        * 上
        */
       KeyEvent.KEYCODE_DPAD_UP -> {
-        mainViewModel.up()
+        if (SPKeyConstants.REVERSE_DIRECTION.getRequired(false)) {
+          mainViewModel.down()
+        } else {
+          mainViewModel.up()
+        }
       }
 
       /**
        * 下
        */
       KeyEvent.KEYCODE_DPAD_DOWN -> {
-        mainViewModel.down()
+        if (SPKeyConstants.REVERSE_DIRECTION.getRequired(false)) {
+          mainViewModel.up()
+        } else {
+          mainViewModel.down()
+        }
       }
 
       // ENTER、OK（确认）
@@ -210,6 +239,7 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
         }
       }
 
+      //  volume down、left
       KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_DPAD_LEFT -> {
         try {
           audioManager.adjustStreamVolume(
@@ -221,6 +251,7 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
         }
       }
 
+      // volume up、right
       KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_DPAD_RIGHT -> {
         val volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         if (volume < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)) {
@@ -237,21 +268,12 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
       }
 
       // 返回
-      KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_ESCAPE -> {
-        if (mainViewModel.showCurrentChannel.value) {
-          // 如果显示了当前频道
-          mainViewModel.showCurrentChannel(false)
-          mainViewModel.rollbackIndex() // 回滚之前的频道
-        } else {
-          if (System.currentTimeMillis() - lastBackTime > 2000) {
-            lastBackTime = System.currentTimeMillis()
-            Toast.makeText(this, "再按一次返回键退出", Toast.LENGTH_SHORT).show()
-          } else {
-            exitProcess(0)
-          }
-        }
+      /*KeyEvent.KEYCODE_BACK,*/ KeyEvent.KEYCODE_ESCAPE -> {
+        handleBackPress()
       }
 
+      // #
+      // 重新加载
       KeyEvent.KEYCODE_POUND -> {
         livePlayerFragment?.refresh()
       }
@@ -299,5 +321,26 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
       KeyEvent.KEYCODE_9, KeyEvent.KEYCODE_NUMPAD_9 -> "9"
       else -> ""
     }
+  }
+
+  /**
+   * 处理 App 默认的返回
+   *
+   * @return true 表示已处理返回键 false 表示未处理返回键
+   */
+  private fun handleBackPress(): Boolean {
+    if (mainViewModel.showCurrentChannel.value) {
+      // 如果显示了当前频道
+      mainViewModel.showCurrentChannel(false)
+      mainViewModel.rollbackIndex() // 回滚之前的频道
+      return false
+    } else {
+      if (System.currentTimeMillis() - lastBackTime > 2000) {
+        lastBackTime = System.currentTimeMillis()
+        Toast.makeText(this, "再按一次返回键退出", Toast.LENGTH_SHORT).show()
+        return false
+      }
+    }
+    return true
   }
 }

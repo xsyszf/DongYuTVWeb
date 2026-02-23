@@ -173,6 +173,11 @@ class ChannelListDialog(
         UpdateUtils.checkUpdate(context)
       }
     }
+
+    binding.btnSetting.setOnClickListener {
+      dismiss()
+      SettingDialog(it.context).show()
+    }
   }
 
   override fun initData() {

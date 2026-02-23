@@ -16,4 +16,9 @@
         <item name="windowMinWidthMajor">80%</item>
         <item name="windowMinWidthMinor">80%</item>
     </style>
+
+    <style name="Theme.BaseDialog" parent="Theme.AppCompat.DayNight.Dialog.MinWidth">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:gravity">center</item>
+    </style>
 </resources>

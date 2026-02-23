@@ -17,6 +17,15 @@ class SPKeyConstants {
      */
     const val CURRENT_CHANNEL = "current_channel"
 
+    /**
+     * 是否反转方向键
+     */
+    const val REVERSE_DIRECTION = "reverse_direction"
+
+    /**
+     * 是否开机自启动
+     */
+    const val BOOT_AUTO_START = "boot_auto_start"
   }
 
 }

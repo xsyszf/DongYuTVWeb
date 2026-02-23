@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <LinearLayout
+        android:padding="30dp"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Button
+            android:clickable="true"
+            android:focusable="true"
+            android:text="返回"
+            android:id="@+id/btn_back"
+            android:background="@drawable/bg_select"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:layout_marginTop="10dp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            android:text="设置"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:layout_marginTop="16dp"
+            android:focusable="true"
+            android:padding="10dp"
+            android:background="@drawable/bg_select"
+            tools:checked="true"
+            android:id="@+id/sw_reverse_direction"
+            android:text="反转方向键"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:layout_marginTop="10dp"
+            android:focusable="true"
+            android:padding="10dp"
+            android:background="@drawable/bg_select"
+            tools:checked="true"
+            android:id="@+id/sw_boot"
+            android:text="开机自启动"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+</layout>

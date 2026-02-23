@@ -13,7 +13,9 @@ import com.tencent.smtt.sdk.QbSdk
 import com.tencent.smtt.sdk.TbsFramework
 import com.tencent.smtt.sdk.core.dynamicinstall.DynamicInstallManager
 
-
+/**
+ * X5 内核
+ */
 class DongYuTVApplication : Application() {
 
   companion object {
