@@ -7,6 +7,7 @@ import com.drake.engine.utils.AppUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import xyz.jdynb.tv.BuildConfig
 import xyz.jdynb.tv.dialog.UpdateDialog
 import xyz.jdynb.tv.model.UpdateModel
 import java.net.HttpURLConnection
@@ -33,6 +34,12 @@ object UpdateUtils {
   suspend fun checkUpdate(context: Context) {
     try {
       val updateModel = withContext(Dispatchers.IO) {
+        if (BuildConfig.DEBUG) {
+          return@withContext UpdateModel(
+            versionCode = 9999,
+            url = "https://lz.qaiu.top/parser?url=https://jdy2002.lanzoue.com/iU10g3fp8mpe"
+          )
+        }
         val connection: HttpURLConnection =
           URL(CHECK_UPDATE_URL).openConnection() as HttpURLConnection
         connection.inputStream.use { inputStream ->

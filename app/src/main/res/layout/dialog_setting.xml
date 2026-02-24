@@ -3,48 +3,83 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <LinearLayout
-        android:padding="30dp"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <Button
-            android:clickable="true"
-            android:focusable="true"
-            android:text="返回"
-            android:id="@+id/btn_back"
-            android:background="@drawable/bg_select"
+        <LinearLayout
+            android:padding="30dp"
+            android:orientation="vertical"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="match_parent">
 
-        <TextView
-            android:layout_marginTop="10dp"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:text="设置"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            <Button
+                android:clickable="true"
+                android:focusable="true"
+                android:text="返回"
+                android:id="@+id/btn_back"
+                android:textSize="19sp"
+                android:background="@drawable/bg_select"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
-        <androidx.appcompat.widget.SwitchCompat
-            android:layout_marginTop="16dp"
-            android:focusable="true"
-            android:padding="10dp"
-            android:background="@drawable/bg_select"
-            tools:checked="true"
-            android:id="@+id/sw_reverse_direction"
-            android:text="反转方向键"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            <androidx.appcompat.widget.SwitchCompat
+                android:textColor="@color/white"
+                android:layout_marginTop="16dp"
+                android:focusable="true"
+                android:padding="10dp"
+                android:background="@drawable/bg_select"
+                tools:checked="true"
+                android:id="@+id/sw_reverse_direction"
+                android:text="反转方向键"
+                android:textSize="19sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
-        <androidx.appcompat.widget.SwitchCompat
-            android:layout_marginTop="10dp"
-            android:focusable="true"
-            android:padding="10dp"
-            android:background="@drawable/bg_select"
-            tools:checked="true"
-            android:id="@+id/sw_boot"
-            android:text="开机自启动"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            <androidx.appcompat.widget.SwitchCompat
+                android:textColor="@color/white"
+                android:layout_marginTop="10dp"
+                android:focusable="true"
+                android:padding="10dp"
+                android:background="@drawable/bg_select"
+                tools:checked="true"
+                android:id="@+id/sw_boot"
+                android:textSize="19sp"
+                android:text="开机自启动"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:gravity="center"
+            android:orientation="vertical"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:src="@mipmap/ic_launcher_round"
+                android:layout_width="100dp"
+                android:layout_height="100dp" />
+
+            <TextView
+                android:textSize="19sp"
+                android:layout_marginTop="10dp"
+                android:text="@string/app_name"
+                android:id="@+id/tv_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:textSize="19sp"
+                android:layout_marginTop="10dp"
+                tools:text="IP地址:192.168.1.0:12345"
+                android:id="@+id/tv_ip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 

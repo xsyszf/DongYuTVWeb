@@ -29,8 +29,8 @@
                 android:focusable="true"
                 android:background="@drawable/bg_select"
                 android:textSize="17sp"
-                android:id="@+id/btn_update"
-                android:text="检查更新"
+                android:id="@+id/btn_refresh"
+                android:text="刷新"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
 

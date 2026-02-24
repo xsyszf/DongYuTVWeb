@@ -27,6 +27,8 @@ import xyz.jdynb.tv.utils.WebViewUpgrade
 import kotlin.system.exitProcess
 import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsControllerCompat
+import com.drake.engine.utils.NetworkUtils
+import kotlinx.coroutines.delay
 import xyz.jdynb.music.utils.SpUtils.getRequired
 import xyz.jdynb.tv.constants.SPKeyConstants
 
@@ -80,7 +82,8 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
 
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-    insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    insetsController.systemBarsBehavior =
+      WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     insetsController.hide(WindowInsetsCompat.Type.systemBars())
 
     // 判断cpu型号决定需不需要升级
@@ -98,28 +101,49 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
     binding.lifecycleOwner = this
 
     channelListDialog = ChannelListDialog(this, mainViewModel)
+    channelListDialog.onRefreshListener = {
+      handleChannelTypeChange()
+    }
   }
 
   override fun initData() {
     lifecycleScope.launch {
       mainViewModel.currentChannelType.collect {
-        // 如果当前频道类型为空，则不处理
-        if (it.isEmpty()) return@collect
-        Log.i(TAG, "currentChannelType: $it")
-        // 根据当前频道类型获取对应的 Fragment 类
-        val fragmentClazz = mainViewModel
-          .getFragmentClassForChannel(mainViewModel.currentChannelModel.value!!)
-          ?: return@collect
-        Log.i(TAG, "showFragment: $fragmentClazz")
+        handleChannelTypeChange(it)
+      }
+    }
 
-        if (isUpgrade || BuildConfig.DEBUG) {
-          showFragment(fragmentClazz)
-        } else {
-          isUpgrade = true
-          WebViewUpgrade.initWebView(this@MainActivity) {
-            showFragment(fragmentClazz)
-          }
-        }
+    lifecycleScope.launch {
+      while (!NetworkUtils.isConnected()) {
+        Toast.makeText(this@MainActivity, "检测到未连接到网络，正在尝试刷新...", Toast.LENGTH_LONG)
+          .show()
+        delay(3000L)
+        handleChannelTypeChange()
+      }
+    }
+  }
+
+  /**
+   * 处理频道类型变化
+   *
+   * @param type 频道类型
+   */
+  private fun handleChannelTypeChange(type: String = mainViewModel.currentChannelType.value) {
+    // 如果当前频道类型为空，则不处理
+    if (type.isEmpty()) return
+    Log.i(TAG, "currentChannelType: $type")
+    // 根据当前频道类型获取对应的 Fragment 类
+    val fragmentClazz = mainViewModel
+      .getFragmentClassForChannel(mainViewModel.currentChannelModel.value!!)
+      ?: return
+    Log.i(TAG, "showFragment: $fragmentClazz")
+
+    if (isUpgrade || BuildConfig.DEBUG) {
+      showFragment(fragmentClazz)
+    } else {
+      isUpgrade = true
+      WebViewUpgrade.initWebView(this@MainActivity) {
+        showFragment(fragmentClazz)
       }
     }
   }
@@ -269,8 +293,8 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
 
       // 返回
       /*KeyEvent.KEYCODE_BACK,*/ KeyEvent.KEYCODE_ESCAPE -> {
-        handleBackPress()
-      }
+      handleBackPress()
+    }
 
       // #
       // 重新加载

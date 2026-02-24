@@ -72,6 +72,7 @@ class UpdateDialog(context: Context, private val updateModel: UpdateModel) :
         withContext(Dispatchers.IO) {
           val url = URL(updateModel.url).openConnection() as HttpURLConnection
           url.doInput = true
+          url.doOutput = true
           url.connectTimeout = 10000
           url.readTimeout = 10000
           val fos = FileOutputStream(file)
@@ -87,6 +88,9 @@ class UpdateDialog(context: Context, private val updateModel: UpdateModel) :
             }
           }
         }
+        if (!file.exists()) {
+          throw IllegalStateException("更新文件不存在")
+        }
         Toast.makeText(context, "下载完成，正在安装", Toast.LENGTH_LONG).show()
         AppUtils.installApp(file)
       }
@@ -97,10 +101,15 @@ class UpdateDialog(context: Context, private val updateModel: UpdateModel) :
     }
   }
 
+  override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+    Log.i(TAG, "dispatchKeyEvent: ${event.keyCode}")
+    return super.dispatchKeyEvent(event)
+  }
+
   override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
     Log.i(TAG, "onKeyDown: $keyCode")
     when (keyCode) {
-      KeyEvent.KEYCODE_ENTER -> {
+      KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_DPAD_CENTER -> {
         Log.i(TAG, "update")
         timeFlag = false
         binding.btnUpdate.callOnClick()

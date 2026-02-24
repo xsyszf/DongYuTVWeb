@@ -45,6 +45,8 @@ class ChannelListDialog(
 
   private var job: Job? = null
 
+  var onRefreshListener: (() -> Unit)? = null
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.dialog_channel_list)
@@ -167,16 +169,20 @@ class ChannelListDialog(
       dismiss()
     }
 
+    binding.btnRefresh.setOnClickListener {
+      onRefreshListener?.invoke()
+    }
+
     // 检查更新
-    binding.btnUpdate.setOnClickListener {
+    /*binding.btnUpdate.setOnClickListener {
       activity.lifecycleScope.launch {
         UpdateUtils.checkUpdate(context)
       }
-    }
+    }*/
 
     binding.btnSetting.setOnClickListener {
       dismiss()
-      SettingDialog(it.context).show()
+      SettingDialog(it.context, mainViewModel).show()
     }
   }
 
