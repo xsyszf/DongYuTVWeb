@@ -13,6 +13,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.SslErrorHandler
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
@@ -368,6 +369,15 @@ abstract class LivePlayerFragment : Fragment(), Playable {
         super.onPageFinished(view, url)
         isPageFinished = true
         onPageFinished(url, currentChannelModel)
+      }
+
+      override fun onReceivedError(
+        view: WebView?,
+        request: WebResourceRequest?,
+        error: WebResourceError?
+      ) {
+        // super.onReceivedError(view, request, error)
+        view?.loadUrl("file:///android_asset/html/error.html")
       }
     }
   }

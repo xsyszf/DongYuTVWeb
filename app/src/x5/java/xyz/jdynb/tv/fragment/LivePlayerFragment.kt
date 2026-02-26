@@ -14,6 +14,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.tencent.smtt.export.external.interfaces.ConsoleMessage
 import com.tencent.smtt.export.external.interfaces.PermissionRequest
+import com.tencent.smtt.export.external.interfaces.WebResourceError
 import com.tencent.smtt.export.external.interfaces.WebResourceRequest
 import com.tencent.smtt.export.external.interfaces.WebResourceResponse
 import com.tencent.smtt.sdk.WebChromeClient
@@ -361,6 +362,10 @@ abstract class LivePlayerFragment : Fragment(), Playable {
         super.onPageFinished(view, url)
         isPageFinished = true
         onPageFinished(url, currentChannelModel)
+      }
+
+      override fun onReceivedError(view: WebView?, p1: WebResourceRequest?, p2: WebResourceError?) {
+        super.onReceivedError(view, p1, p2)
       }
     }
   }

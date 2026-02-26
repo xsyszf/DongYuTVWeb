@@ -1,8 +1,12 @@
 package xyz.jdynb.tv
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioManager
+import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -61,6 +65,13 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
    */
   private var isUpgrade = false
 
+  private var isNetworkConnected = false
+
+  /**
+   *网络状态广播接收器
+   */
+  private val networkReceiver = NetworkBoardReceiver()
+
   override fun init() {
     super.init()
     // 悬浮窗权限改为手动授权，不对用户展示，以免影响体验
@@ -94,6 +105,32 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
     Log.i(TAG, "abi: ${Build.SUPPORTED_ABIS.joinToString(",")}")
 
     audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+
+    isNetworkConnected = NetworkUtils.isConnected()
+
+    // 注册网络状态广播接收器
+    registerNetworkReceiver()
+  }
+
+  /**
+   * 注册网络状态广播接收器
+   */
+  private fun registerNetworkReceiver() {
+    val filter = IntentFilter().apply {
+      addAction(ConnectivityManager.CONNECTIVITY_ACTION)
+    }
+    registerReceiver(networkReceiver, filter)
+  }
+
+  /**
+   * 注销网络状态广播接收器
+   */
+  private fun unregisterNetworkReceiver() {
+    try {
+      unregisterReceiver(networkReceiver)
+    } catch (e: IllegalArgumentException) {
+      //接器未注册时会抛出异常，忽略
+    }
   }
 
   override fun initView() {
@@ -113,14 +150,15 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
       }
     }
 
-    lifecycleScope.launch {
+    // 轮询判断网络是否连接，这里不使用，而是使用动态注册的广播接收器
+    /*lifecycleScope.launch {
       while (!NetworkUtils.isConnected()) {
         Toast.makeText(this@MainActivity, "检测到未连接到网络，正在尝试刷新...", Toast.LENGTH_LONG)
           .show()
         delay(3000L)
         handleChannelTypeChange()
       }
-    }
+    }*/
   }
 
   /**
@@ -366,5 +404,27 @@ class MainActivity : EngineActivity<ActivityMainBinding>(R.layout.activity_main)
       }
     }
     return true
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    // 注销网络状态广播接收器
+    unregisterNetworkReceiver()
+  }
+
+  private inner class NetworkBoardReceiver: BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+      Log.i(TAG, "network change")
+      val currentNetworkConnected = NetworkUtils.isConnected()
+      if (currentNetworkConnected && !isNetworkConnected) {
+        //连接时调用 handleChannelTypeChange 方法
+        handleChannelTypeChange()
+        Toast.makeText(context, "已连接到网络", Toast.LENGTH_SHORT).show()
+      } else if (!currentNetworkConnected) {
+        Toast.makeText(context, "已断开网络，当网络连接后自动刷新页面", Toast.LENGTH_LONG).show()
+      }
+      isNetworkConnected = currentNetworkConnected
+    }
+
   }
 }
